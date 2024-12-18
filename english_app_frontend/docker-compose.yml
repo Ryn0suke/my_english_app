@@ -1,0 +1,9 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.prod
+    ports:
+      - "80:80"  # NGINXが使用するポートを公開
+
+    # 本番環境用の設定なので、不要なボリュームマウントや開発サーバーのコマンドを削除

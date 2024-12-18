@@ -1,0 +1,48 @@
+version: "3.8"
+services:
+  db:
+    image: postgres:17
+    volumes:
+      - ./english_learning_app_backend/tmp/db:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    networks:
+      - backend-network
+
+  api:
+    build:
+      context: ./english_learning_app_backend/
+      dockerfile: Dockerfile
+    image: api:latest
+    command: bash -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    environment:
+      RAILS_ENV: development
+    ports:
+      - "3000:3000"
+    depends_on:
+      - db
+    networks:
+      - backend-network
+    volumes:
+      - ./english_learning_app_backend:/backend
+  web:
+    build:
+      context: ./english_app_frontend/
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./english_app_frontend/frontend:/usr/src/app/frontend
+    environment:
+      NODE_ENV: development
+    restart: always
+    networks:
+      - backend-network
+
+networks:
+  backend-network:
+    driver: bridge

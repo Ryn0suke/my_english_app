@@ -1,0 +1,35 @@
+# ベースイメージとして公式のNode.jsイメージを使用して軽量化
+FROM node:20 as build
+
+# アプリの作業ディレクトリを作成
+WORKDIR /usr/src/app
+
+# package.jsonとpackage-lock.jsonをコピーして依存関係をインストール
+COPY package*.json ./
+
+# 依存関係をインストール
+RUN npm install
+
+# ソースコードをコピー
+COPY . .
+
+# 本番環境用にビルド
+RUN npm run build
+
+# NGINXを使って静的ファイルを提供する
+FROM nginx:latest
+
+# ビルドしたファイルをnginxの公開ディレクトリにコピー
+COPY --from=build /usr/src/app/build /usr/share/nginx/html
+
+# NGINXのデフォルト設定ファイルを削除
+RUN rm /etc/nginx/conf.d/default.conf
+
+# NGINX設定ファイルを追加 (ここで必要に応じて設定ファイルを準備)
+COPY nginx.conf /etc/nginx/conf.d
+
+# コンテナのポートを公開
+EXPOSE 80
+
+# NGINXをデフォルトで起動
+CMD ["nginx", "-g", "daemon off;"]
